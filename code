@@ -1,0 +1,127 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+struct produit {
+    char nom[51];
+    int qt;
+    float pa;
+    float pv;
+};
+
+struct tproduit{
+    struct produit list[100];
+};
+
+struct vente{
+    int qtv;
+    float totale;
+    float benefice;
+};
+
+struct facture{
+    struct tproduit tp;
+    struct vente list[100];
+    char nomp[51];
+    float tt;
+    float ben;
+};
+
+// saisir produit
+void saisirProduit(struct produit *p){
+    printf("Nom produit: ");
+    scanf("%s", p->nom);
+
+    printf("Quantité: ");
+    scanf("%d", &p->qt);
+
+    printf("Prix achat: ");
+    scanf("%f", &p->pa);
+
+    printf("Prix vente: ");
+    scanf("%f", &p->pv);
+}
+
+// vente
+void calculVente(struct produit p, struct vente *v){
+    printf("Quantité vendue: ");
+    scanf("%d", &v->qtv);
+
+    v->totale = v->qtv * p.pv;
+    v->benefice = v->qtv * (p.pv - p.pa);
+}
+struct produit {
+    char nom[51];
+    int qt;
+    float pa;
+    float pv;
+};
+
+struct vente{
+    int qtv;
+    float totale;
+    float benefice;
+};
+
+struct facture{
+    struct produit p;
+    struct vente v;
+    float tt;
+    float ben;
+};
+
+// saisir produit
+void produit(struct produit *p){
+    printf("donner le nom du produit: ");
+    scanf("%s", p->nom);
+
+    printf("donner quantité: ");
+    scanf("%d", &p->qt);
+
+    printf("donner le prix d'achat: ");
+    scanf("%f", &p->pa);
+
+    printf("donner le prix de vente: ");
+    scanf("%f", &p->pv);
+}
+
+// vente
+void vente(struct produit p, struct vente *v){
+    printf("donner la quantité vendue: ");
+    scanf("%d", &v->qtv);
+
+    if(v->qtv > p.qt){
+        printf("stock insuffisant !\n");
+        v->qtv = 0;
+    }
+
+    v->totale = v->qtv * p.pv;
+    v->benefice = v->qtv * (p.pv - p.pa);
+}
+
+// facture
+void facture(struct facture *f){
+    produit(&f->p);
+    vente(f->p, &f->v);
+
+    f->tt = f->v.totale;
+    f->ben = f->v.benefice;
+
+    printf("\n--- FACTURE ---\n");
+    printf("Produit: %s\n", f->p.nom);
+    printf("Totale: %.2f\n", f->tt);
+    printf("Benefice: %.2f\n", f->ben);
+}
+int main(){
+    struct produit p;
+    struct vente v;
+
+    saisirProduit(&p);
+    calculVente(p, &v);
+
+    printf("Totale: %.2f\n", v.totale);
+    printf("Benefice: %.2f\n", v.benefice);
+struct facture f;
+
+    facture(&f);
+    return 0;
+}
