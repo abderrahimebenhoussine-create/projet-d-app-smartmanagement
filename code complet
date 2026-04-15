@@ -1,0 +1,194 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// ===== STRUCT =====
+typedef struct produit {
+    char nom[50];
+    int qt;
+    float pa;
+    float pv;
+    struct produit *suiv;
+} produit;
+
+// ===== AJOUT LISTE =====
+produit* ajouter(produit *tete){
+    produit *nv = (produit*)malloc(sizeof(produit));
+
+    printf("Nom: ");
+    scanf("%s", nv->nom);
+
+    printf("Quantite: ");
+    scanf("%d", &nv->qt);
+
+    printf("Prix achat: ");
+    scanf("%f", &nv->pa);
+
+    printf("Prix vente: ");
+    scanf("%f", &nv->pv);
+
+    nv->suiv = tete;
+    return nv;
+}
+
+// ===== AFFICHAGE =====
+void afficher(produit *tete){
+    produit *p = tete;
+
+    printf("\n--- STOCK ---\n");
+
+    while(p){
+        printf("%s | qt:%d | pa:%.2f | pv:%.2f\n",
+               p->nom, p->qt, p->pa, p->pv);
+        p = p->suiv;
+    }
+}
+
+// ===== RECHERCHE =====
+produit* chercher(produit *tete, char nom[]){
+    produit *p = tete;
+
+    while(p){
+        if(strcmp(p->nom, nom) == 0)
+            return p;
+        p = p->suiv;
+    }
+    return NULL;
+}
+
+// ===== MODIFIER =====
+void modifier(produit *tete){
+    char nom[50];
+    printf("Nom produit: ");
+    scanf("%s", nom);
+
+    produit *p = chercher(tete, nom);
+
+    if(p){
+        printf("Nouvelle quantite: ");
+        scanf("%d", &p->qt);
+
+        printf("Nouveau pa: ");
+        scanf("%f", &p->pa);
+
+        printf("Nouveau pv: ");
+        scanf("%f", &p->pv);
+    } else {
+        printf("Produit non trouve !\n");
+    }
+}
+
+// ===== VENTE =====
+void vente(produit *tete){
+    char nom[50];
+    int qtv;
+    float total = 0, benef = 0;
+
+    printf("Nom produit: ");
+    scanf("%s", nom);
+
+    produit *p = chercher(tete, nom);
+
+    if(p){
+        printf("Quantite vendue: ");
+        scanf("%d", &qtv);
+
+        if(qtv > p->qt){
+            printf("Stock insuffisant !\n");
+            return;
+        }
+
+        float t = qtv * p->pv;
+        float b = qtv * (p->pv - p->pa);
+
+        p->qt -= qtv;
+
+        total += t;
+        benef += b;
+
+        printf("\n--- FACTURE ---\n");
+        printf("Produit: %s\n", p->nom);
+        printf("Total: %.2f\n", t);
+        printf("Benefice: %.2f\n", b);
+
+    } else {
+        printf("Produit non trouve !\n");
+    }
+}
+
+// ===== SAVE FILE =====
+void sauvegarder(produit *tete){
+    FILE *f = fopen("stock.dat", "wb");
+    produit *p = tete;
+
+    while(p){
+        fwrite(p, sizeof(produit), 1, f);
+        p = p->suiv;
+    }
+
+    fclose(f);
+}
+
+// ===== LOAD FILE =====
+produit* charger(){
+    FILE *f = fopen("stock.dat", "rb");
+    produit *tete = NULL;
+
+    if(!f) return NULL;
+
+    produit temp;
+
+    while(fread(&temp, sizeof(produit), 1, f)){
+        produit *nv = (produit*)malloc(sizeof(produit));
+        *nv = temp;
+        nv->suiv = tete;
+        tete = nv;
+    }
+
+    fclose(f);
+    return tete;
+}
+
+// ===== MAIN =====
+int main(){
+    produit *stock = charger();
+    int choix;
+
+    do{
+        printf("\n===== MENU =====\n");
+        printf("1. Ajouter produit\n");
+        printf("2. Afficher stock\n");
+        printf("3. Modifier produit\n");
+        printf("4. Vente\n");
+        printf("5. Sauvegarder\n");
+        printf("0. Quitter\n");
+
+        printf("Choix: ");
+        scanf("%d", &choix);
+
+        if(choix == 1){
+            stock = ajouter(stock);
+        }
+        else if(choix == 2){
+            afficher(stock);
+        }
+        else if(choix == 3){
+            modifier(stock);
+        }
+        else if(choix == 4){
+            vente(stock);
+        }
+        else if(choix == 5){
+            sauvegarder(stock);
+        }
+        else if(choix == 0){
+            printf("Bye \n");
+        }
+        else{
+            printf("Choix invalide !\n");
+        }
+
+    }while(choix != 0);
+
+    return 0;
+}
