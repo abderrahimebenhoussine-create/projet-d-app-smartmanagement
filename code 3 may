@@ -1,0 +1,368 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct produit {
+    char nom[50];
+    int qt;
+    float pa;
+    float pv;
+    struct produit *suiv;
+} produit;
+
+produit* chercher(produit *tete, char nom[]) {
+    produit *p;
+    p = tete;
+
+    while (p != NULL) {
+        if (strcmp(p->nom, nom) == 0) {
+            return p;
+        }
+        p = p->suiv;
+    }
+
+    return NULL;
+}
+
+produit* ajouter(produit *tete) {
+    produit *nv;
+
+    nv = (produit*) malloc(sizeof(produit));
+
+    if (nv == NULL) {
+        printf("Erreur allocation memoire !\n");
+        return tete;
+    }
+
+    printf("Nom: ");
+    scanf(" %49[^\n]", nv->nom);
+
+    if (chercher(tete, nv->nom) != NULL) {
+        printf("Ce produit existe deja !\n");
+        free(nv);
+        return tete;
+    }
+
+    printf("Quantite: ");
+    scanf("%d", &nv->qt);
+
+    printf("Prix achat: ");
+    scanf("%f", &nv->pa);
+
+    printf("Prix vente: ");
+    scanf("%f", &nv->pv);
+
+    nv->suiv = tete;
+    tete = nv;
+
+    printf("Produit ajoute avec succes.\n");
+
+    return tete;
+}
+
+void afficher(produit *tete) {
+    produit *p;
+    p = tete;
+
+    if (p == NULL) {
+        printf("\nStock vide !\n");
+        return;
+    }
+
+    printf("\n========== STOCK ==========\n");
+
+    while (p != NULL) {
+        printf("Nom: %s | Quantite: %d | Prix achat: %.2f | Prix vente: %.2f\n",
+               p->nom, p->qt, p->pa, p->pv);
+
+        p = p->suiv;
+    }
+}
+
+void modifier(produit *tete) {
+    char nom[50];
+    produit *p;
+
+    printf("Nom produit a modifier: ");
+    scanf(" %49[^\n]", nom);
+
+    p = chercher(tete, nom);
+
+    if (p == NULL) {
+        printf("Produit non trouve !\n");
+        return;
+    }
+
+    printf("Nouvelle quantite: ");
+    scanf("%d", &p->qt);
+
+    printf("Nouveau prix achat: ");
+    scanf("%f", &p->pa);
+
+    printf("Nouveau prix vente: ");
+    scanf("%f", &p->pv);
+
+    printf("Produit modifie avec succes.\n");
+}
+
+produit* supprimer(produit *tete) {
+    char nom[50];
+    produit *p;
+    produit *prec;
+
+    printf("Nom produit a supprimer: ");
+    scanf(" %49[^\n]", nom);
+
+    p = tete;
+    prec = NULL;
+
+    while (p != NULL && strcmp(p->nom, nom) != 0) {
+        prec = p;
+        p = p->suiv;
+    }
+
+    if (p == NULL) {
+        printf("Produit non trouve !\n");
+        return tete;
+    }
+
+    if (prec == NULL) {
+        tete = p->suiv;
+    } else {
+        prec->suiv = p->suiv;
+    }
+
+    free(p);
+
+    printf("Produit supprime avec succes.\n");
+
+    return tete;
+}
+
+/* ===== VENTE PLUSIEURS PRODUITS + CREANCE ===== */
+void vente(produit *tete) {
+    char nom[50];
+    int qte;
+    int autre;
+    int nb;
+    int i;
+
+    float totalFacture;
+    float totalCreance;
+    float total;
+    float creance;
+
+    char nomVendu[100][50];
+    int qteVendue[100];
+    float prixAchat[100];
+    float prixVente[100];
+    float totalProduit[100];
+    float creanceProduit[100];
+    int resteStock[100];
+
+    produit *p;
+
+    if (tete == NULL) {
+        printf("Stock vide !\n");
+        return;
+    }
+
+    autre = 1;
+    nb = 0;
+    totalFacture = 0;
+    totalCreance = 0;
+
+    printf("\n========== VENTE ==========\n");
+
+    while (autre == 1) {
+        if (nb >= 100) {
+            printf("Nombre maximum de produits atteint.\n");
+            break;
+        }
+
+        printf("\nNom produit: ");
+        scanf(" %49[^\n]", nom);
+
+        p = chercher(tete, nom);
+
+        if (p == NULL) {
+            printf("Produit non trouve !\n");
+        } else {
+            printf("Quantite vendue: ");
+            scanf("%d", &qte);
+
+            if (qte <= 0) {
+                printf("Quantite invalide !\n");
+            } else if (qte > p->qt) {
+                printf("Stock insuffisant ! Quantite disponible: %d\n", p->qt);
+            } else {
+                total = qte * p->pv;
+                creance = qte * (p->pv - p->pa);
+
+                p->qt = p->qt - qte;
+
+                strcpy(nomVendu[nb], p->nom);
+                qteVendue[nb] = qte;
+                prixAchat[nb] = p->pa;
+                prixVente[nb] = p->pv;
+                totalProduit[nb] = total;
+                creanceProduit[nb] = creance;
+                resteStock[nb] = p->qt;
+
+                totalFacture = totalFacture + total;
+                totalCreance = totalCreance + creance;
+
+                nb = nb + 1;
+
+                printf("Produit ajoute a la facture.\n");
+            }
+        }
+
+        printf("\nAjouter un autre produit ? 1 = oui / 0 = non: ");
+        scanf("%d", &autre);
+    }
+
+    if (nb == 0) {
+        printf("\nAucun produit vendu.\n");
+        return;
+    }
+
+    printf("\n================ FACTURE ================\n");
+
+    for (i = 0; i < nb; i++) {
+        printf("\nProduit: %s\n", nomVendu[i]);
+        printf("Quantite: %d\n", qteVendue[i]);
+        printf("Prix achat: %.2f\n", prixAchat[i]);
+        printf("Prix vente: %.2f\n", prixVente[i]);
+        printf("Total produit: %.2f\n", totalProduit[i]);
+        printf("Creance produit: %.2f\n", creanceProduit[i]);
+        printf("Stock restant: %d\n", resteStock[i]);
+    }
+
+    printf("\n-----------------------------------------\n");
+    printf("Total facture: %.2f\n", totalFacture);
+    printf("Total creance: %.2f\n", totalCreance);
+    printf("=========================================\n");
+}
+
+void sauvegarder(produit *tete) {
+    FILE *f;
+    produit *p;
+
+    f = fopen("stock.dat", "wb");
+
+    if (f == NULL) {
+        printf("Erreur ouverture fichier !\n");
+        return;
+    }
+
+    p = tete;
+
+    while (p != NULL) {
+        fwrite(p, sizeof(produit), 1, f);
+        p = p->suiv;
+    }
+
+    fclose(f);
+
+    printf("Stock sauvegarde avec succes.\n");
+}
+
+produit* charger() {
+    FILE *f;
+    produit *tete;
+    produit *nv;
+    produit temp;
+
+    f = fopen("stock.dat", "rb");
+    tete = NULL;
+
+    if (f == NULL) {
+        return NULL;
+    }
+
+    while (fread(&temp, sizeof(produit), 1, f) == 1) {
+        nv = (produit*) malloc(sizeof(produit));
+
+        if (nv == NULL) {
+            printf("Erreur allocation memoire pendant le chargement !\n");
+            fclose(f);
+            return tete;
+        }
+
+        strcpy(nv->nom, temp.nom);
+        nv->qt = temp.qt;
+        nv->pa = temp.pa;
+        nv->pv = temp.pv;
+
+        nv->suiv = tete;
+        tete = nv;
+    }
+
+    fclose(f);
+
+    return tete;
+}
+
+void liberer(produit *tete) {
+    produit *p;
+
+    while (tete != NULL) {
+        p = tete;
+        tete = tete->suiv;
+        free(p);
+    }
+}
+
+int main() {
+    produit *stock;
+    int choix;
+
+    stock = charger();
+
+    do {
+        printf("\n========== MENU ==========\n");
+        printf("1. Ajouter produit\n");
+        printf("2. Afficher stock\n");
+        printf("3. Modifier produit\n");
+        printf("4. Vente\n");
+        printf("5. Supprimer produit\n");
+        printf("6. Sauvegarder\n");
+        printf("0. Quitter\n");
+        printf("==========================\n");
+
+        printf("Choix: ");
+        scanf("%d", &choix);
+
+        if (choix == 1) {
+            stock = ajouter(stock);
+        }
+        else if (choix == 2) {
+            afficher(stock);
+        }
+        else if (choix == 3) {
+            modifier(stock);
+        }
+        else if (choix == 4) {
+            vente(stock);
+        }
+        else if (choix == 5) {
+            stock = supprimer(stock);
+        }
+        else if (choix == 6) {
+            sauvegarder(stock);
+        }
+        else if (choix == 0) {
+            sauvegarder(stock);
+            liberer(stock);
+            printf("Sauvegarde automatique effectuee.\n");
+            printf("Bye!\n");
+        }
+        else {
+            printf("Choix invalide !\n");
+        }
+
+    } while (choix != 0);
+
+    return 0;
+}
